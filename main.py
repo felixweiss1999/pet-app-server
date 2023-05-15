@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Depends
 from pydantic import BaseModel, Field, EmailStr
 from app.model import PostSchema, UserLoginSchema, UserSchema
 from app.auth.jwt_handler import signJWT 
-
+from app.auth.jwt_bearer import jwtBearer
 app = FastAPI()
 
 posts = [
@@ -50,11 +50,11 @@ def get_post_by_id(id: int):
     return {"error" : "Post not found!"}
 
 #post a post
-@app.post("/posts", tags=["posts"])
+@app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"])
 def add_post(post: PostSchema):
     post.id = len(posts) + 1
     posts.append(post.dict())
-    return {"info" : "pots added"}
+    return {"info" : "post added"}
 
 #user signup - create new user
 @app.post("/user/signup", tags=["user"])
