@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from pydantic import BaseModel, Field, EmailStr
-from app.model import PostSchema
+from app.model import PostSchema, UserLoginSchema, UserSchema
+from app.auth.jwt_handler import signJWT 
 
 app = FastAPI()
 
@@ -38,7 +39,7 @@ def greet():
 def get_posts():
     return {"data" : posts}
 
-#retrieve pots by id
+#retrieve posts by id
 @app.get("/posts/{id}", tags=["posts"])
 def get_post_by_id(id: int):
     if id > len(posts) or id < 0:
@@ -55,42 +56,21 @@ def add_post(post: PostSchema):
     posts.append(post.dict())
     return {"info" : "pots added"}
 
+#user signup - create new user
+@app.post("/user/signup", tags=["user"])
+def user_signup(user: UserSchema = Body(default=None)): #!!! lookup what this Body thing is in docs!
+    users.append(user)
+    return signJWT(user.email)
 
-
-"""
-@app.post("/items/")
-async def create_item(item: Item):
-    item_dict = item.dict()
-    if item.tax:
-        price_with_tax = item.price + item.tax
-        item_dict.update({"price_with_tax": price_with_tax})
-    return item_dict
-
-@app.put("/items/{item_id}")
-async def create_item(item_id: int, item: Item, q: str | None = None):
-    result = {"item_id": item_id, **item.dict()}
-    if q:
-        result.update({"q": q})
-    return result
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.get("/items/{item_id}")
-async def read_item(item_id : int):
-    return {"item_id": item_id}
-
-@app.get("/users/{user_id}/items/{item_id}")
-async def read_user_item(
-    user_id: int, item_id: str, q: str | None = None, short: bool = False
-):
-    item = {"item_id": item_id, "owner_id": user_id}
-    if q:
-        item.update({"q": q})
-    if not short:
-        item.update(
-            {"description": "This is an amazing item that has a long description"}
-        )
-    return item
-"""
+def check_user(data: UserLoginSchema):
+    for user in users:
+        if user.email == data.email and user.password == data.password:
+            return True
+    return False
+    
+@app.post("/user/login", tags=["user"])
+def user_login(user: UserLoginSchema = Body()):
+    if check_user(user):
+        return signJWT(user.email)
+    else:
+        return {"error" : "Invalid login details!"}

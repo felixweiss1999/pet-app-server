@@ -20,9 +20,15 @@ def signJWT(userID: str):
     token = jwt.encode(payload, JWT_SECRET, algorithm = JWT_ALGORITHM)
     return token_response(token)
 
+
 def decodeJWT(token : str):
     try:
         decode_token = jwt.decode(token, JWT_SECRET, algorithm=JWT_ALGORITHM)
         return decode_token if decode_token["expires"] >= time.time() else None
     except:
         return {}
+    
+#note: token itself is not encrypted. 
+#it is encoded in Base64 representing binary data
+# so this is binary text. But only server
+#using secret can verify authenticity!!
