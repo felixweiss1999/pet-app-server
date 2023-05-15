@@ -33,10 +33,12 @@ app = FastAPI()
 def greet():
     return {"Hello", "World"}
 
+#retrieve all posts
 @app.get("/posts", tags=["posts"])
 def get_posts():
     return {"data" : posts}
 
+#retrieve pots by id
 @app.get("/posts/{id}", tags=["posts"])
 def get_post_by_id(id: int):
     if id > len(posts) or id < 0:
@@ -45,6 +47,16 @@ def get_post_by_id(id: int):
         if post["id"] == id:
             return {"data" : post}
     return {"error" : "Post not found!"}
+
+#post a post
+@app.post("/posts", tags=["posts"])
+def add_post(post: PostSchema):
+    post.id = len(posts) + 1
+    posts.append(post.dict())
+    return {"info" : "pots added"}
+
+
+
 """
 @app.post("/items/")
 async def create_item(item: Item):
