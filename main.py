@@ -1,9 +1,26 @@
 from fastapi import FastAPI
+from pydantic import BaseModel, Field, EmailStr
+from app.model import PostSchema
 
 app = FastAPI()
 
-from pydantic import BaseModel
-
+posts = [
+    {
+        "id" : 1,
+        "title" : "penguins",
+        "text" : "penguins are blabla"
+    },
+    {
+        "id" : 2,
+        "title" : "elephant",
+        "text" : "elephants like trees"
+    },
+    {
+        "id" : 3,
+        "title" : "lions",
+        "text" : "lions be lyin'"
+    }
+]
 
 class Item(BaseModel):
     name: str
@@ -14,7 +31,7 @@ class Item(BaseModel):
 
 app = FastAPI()
 
-
+"""
 @app.post("/items/")
 async def create_item(item: Item):
     item_dict = item.dict()
@@ -50,3 +67,4 @@ async def read_user_item(
             {"description": "This is an amazing item that has a long description"}
         )
     return item
+"""
