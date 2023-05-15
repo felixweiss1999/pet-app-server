@@ -22,15 +22,29 @@ posts = [
     }
 ]
 
-class Item(BaseModel):
-    name: str
-    description: str | None = None
-    price: float
-    tax: float | None = None
+users = []
+
 
 
 app = FastAPI()
 
+
+@app.get("/")
+def greet():
+    return {"Hello", "World"}
+
+@app.get("/posts", tags=["posts"])
+def get_posts():
+    return {"data" : posts}
+
+@app.get("/posts/{id}", tags=["posts"])
+def get_post_by_id(id: int):
+    if id > len(posts) or id < 0:
+        return {"error" : "Post with this ID does not exist!"}
+    for post in posts:
+        if post["id"] == id:
+            return {"data" : post}
+    return {"error" : "Post not found!"}
 """
 @app.post("/items/")
 async def create_item(item: Item):
