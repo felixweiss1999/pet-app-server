@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, Depends
+from fastapi import FastAPI, Body, Depends, Request
 from pydantic import BaseModel, Field, EmailStr
 from app.model import PostSchema, UserLoginSchema, UserSchema
 from app.auth.jwt_handler import signJWT 
@@ -49,9 +49,13 @@ def get_post_by_id(id: int):
             return {"data" : post}
     return {"error" : "Post not found!"}
 
-#post a post
-@app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"])
-def add_post(post: PostSchema):
+#post a postc
+@app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"]) # remove dependency for production!
+async def add_post(post: PostSchema, request : Request):
+    extractor = jwtBearer()
+    confirmeduid : str = await extractor(request=request)
+    if post.poster != confirmeduid:
+        return {"error" : "User IDs do not match!"}
     post.id = len(posts) + 1
     posts.append(post.dict())
     return {"info" : "post added"}

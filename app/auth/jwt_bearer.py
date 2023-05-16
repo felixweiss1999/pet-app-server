@@ -4,16 +4,18 @@
 from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .jwt_handler import decodeJWT
+import time
 # used to persist authentication on the routes
 class jwtBearer(HTTPBearer):
-    def verify_jwt(self, jwtoken : str):
-        isTokenValid : bool = False
-        print(jwtoken)
-        payload = decodeJWT(jwtoken)
-        print(payload)
-        if payload:
-            isTokenValid = True
-        return isTokenValid
+    def extract_uid(self, jwtokenn : str):
+        payload = decodeJWT(jwtokenn)
+        try:
+            if payload["expiry"] >= time.time():
+                return payload["userID"]
+        except Exception as e:
+            print(repr(e))
+            return False
+        return False
     
     def __init__(self, auto_Error : bool = True):
         super(jwtBearer, self).__init__(auto_error=auto_Error) #inherit everything from HTTPBearer super class
@@ -23,9 +25,10 @@ class jwtBearer(HTTPBearer):
         if credentials:
             if not credentials.scheme == "Bearer":
                 raise HTTPException(status_code = 403, detail="No token provided!")
-            elif not self.verify_jwt(credentials.credentials):
+            elif not self.extract_uid(credentials.credentials):
                 raise HTTPException(status_code=403, detail="Invalid Token!")
-            return credentials.credentials #actual token value
+            else:
+                return self.extract_uid(credentials.credentials) #actual token value
         else:
             raise HTTPException(status_code = 403, detail="No token provided!")
         
