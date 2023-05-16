@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Body, Depends, Request
-from pydantic import BaseModel, Field, EmailStr
 from app.model import PostSchema, UserLoginSchema, UserSchema
 from app.auth.jwt_handler import signJWT 
 from app.auth.jwt_bearer import jwtBearer

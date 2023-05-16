@@ -1,12 +1,12 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr
 
 
 # schema of user post requests
 class PostSchema(BaseModel):
-    id: int = Field(default=None)
-    title: str = Field(default=None)
-    content: str = Field(default=None)
-    poster: str = Field(default=None)
+    id: int 
+    title: str
+    content: str
+    poster: str
 
 class Item(BaseModel):
     name: str
@@ -15,12 +15,12 @@ class Item(BaseModel):
     tax: float | None = None
 
 class UserSchema(BaseModel):
-    fullname : str = Field(default=None)
-    email : EmailStr = Field(default = None)
-    password : str = Field(default = None)
+    fullname : str
+    email : EmailStr
+    password : str
 
 class UserLoginSchema(BaseModel):
-    email : EmailStr = Field(default = None)
-    password : str = Field(default = None)
+    email : EmailStr
+    password : str
 
 
