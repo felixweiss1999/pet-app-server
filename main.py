@@ -55,10 +55,10 @@ async def add_post(post: PostSchema, request : Request):
     extractor = jwtBearer()
     confirmeduid : str = await extractor(request=request)
     if post.poster != confirmeduid:
-        return {"error" : "User IDs do not match!"}
+        return {"error" : f"Only able to post as {confirmeduid}!"}
     post.id = len(posts) + 1
     posts.append(post.dict())
-    return {"info" : "post added"}
+    return {"info" : "post added", "id" : post.id}
 
 #user signup - create new user
 @app.post("/user/signup", tags=["user"])
