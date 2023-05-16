@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Session
-import models, schemas
+from . import models, schemas
 
 
 def get_user(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
+
+def get_public_user(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
