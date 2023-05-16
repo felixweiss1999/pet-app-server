@@ -55,6 +55,9 @@ async def add_post(post: PostSchema, request : Request):
     confirmeduid : str = await extractor(request=request)
     if post.poster != confirmeduid:
         return {"error" : f"Only able to post as {confirmeduid}!"}
+    if not any(user.email == confirmeduid for user in users):
+        return {"error" : f"Unable to post as nonexistent user!"}
+
     post.id = len(posts) + 1
     posts.append(post.dict())
     return {"info" : "post added", "id" : post.id}
