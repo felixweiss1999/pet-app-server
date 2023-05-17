@@ -45,33 +45,42 @@ def greet():
     return {"Hello", "World"}
 
 #retrieve all posts
-@app.get("/posts", tags=["posts"])
-def get_posts():
-    return {"data" : posts}
+@app.get("/posts", tags=["posts"], response_model=list[schemas.Post])
+def get_all_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_posts(db=db, skip=skip, limit=limit)
 
-#retrieve posts by id
-@app.get("/posts/{id}", tags=["posts"])
-def get_post_by_id(id: int):
-    if id > len(posts) or id < 0:
-        return {"error" : "Post with this ID does not exist!"}
-    for post in posts:
-        if post["id"] == id:
-            return {"data" : post}
-    return {"error" : "Post not found!"}
+#retrieve post by id
+@app.get("/posts/{id}", tags=["posts"], response_model=schemas.Post)
+def get_post_by_id(id: int, db: Session = Depends(get_db)):
+    db_post = crud.get_post_by_id(db=db, id=id)
+    if db_post is None:
+        raise HTTPException(status_code=404, detail="Post not found!")
+    return db_post
+
+#retrieve post by user
+@app.get("/user/{user_id}/posts", tags=["posts"], response_model=list[schemas.Post])
+def get_posts_by_userid(user_id : str, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found!")
+    return db_user.posts
+
+#retrieve replies to post
+@app.get("/posts/{id}/replies", tags=["posts"], response_model=list[schemas.Post])
+def get_replies_to_post(postid : int, db: Session = Depends(get_db)):
+    return crud.get_post_replies(db=db, postid=postid)
 
 #post a post
-@app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"]) # remove dependency for production!
-async def add_post(post: PostSchema, request : Request):
+@app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"], response_model=schemas.Post) # remove dependency for production!
+async def add_post(post: schemas.PostCreate, request : Request, db: Session = Depends(get_db)):
     useMeToExtract = jwtBearer()
     confirmeduid : str = await useMeToExtract(request=request)
-    if post.poster != confirmeduid:
-        return {"error" : f"Only able to post as {confirmeduid}!"}
-    if not any(user.email == confirmeduid for user in users):
-        return {"error" : f"Unable to post as nonexistent user!"}
-
-    post.id = len(posts) + 1
-    posts.append(post.dict())
-    return {"info" : "post added", "id" : post.id}
+    if post.owner_id != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot post as someone else!")
+    db_user = crud.get_user_by_email(db=db,email=post.owner_id)
+    if db_user is None:
+        raise HTTPException(status_code=403, detail="User does not exist!")
+    return crud.create_post(db=db, post=post)
 
 
 
@@ -80,24 +89,21 @@ async def add_post(post: PostSchema, request : Request):
 #user signup - create new user
 @app.post("/user/signup", tags=["user"], response_model=schemas.User)
 def user_signup(user: schemas.UserCreate, db: Session = Depends(get_db)): #!!! lookup what this Body thing is in docs!
-    db_user = crud.get_user(db, email=user.email)
+    db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="User already exists!")
     return crud.create_user(db=db, user=user) #for this to work response model must be declared!
     
 @app.post("/user/login", tags=["user"])
-def user_login(user: schemas.UserCreate, db: Session = Depends(get_db)): #UserCreate has password!
-    db_user = crud.get_user(db, email=user.email)
+def user_login(user: UserLoginSchema, db: Session = Depends(get_db)): #UserCreate has password!
+    db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         return signJWT(user.email)
     raise HTTPException(status_code=403, detail="Invalid login credentials!")
 
-#depending on who is logged in, return full info or only public info
 @app.get("/user/{user_id}", response_model=schemas.User) #User does not contain password!
-async def read_user(user_id: str, db: Session = Depends(get_db)):
-    # useMeToExtract = jwtBearer()
-    # confirmeduid : str = await useMeToExtract(request=request)
-    db_user = crud.get_user(db, user_id=user_id)
+async def get_user_by_email(user_id: str, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user

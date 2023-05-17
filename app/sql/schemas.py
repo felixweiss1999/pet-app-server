@@ -1,3 +1,4 @@
+from __future__ import annotations #allows self referencing classes
 from pydantic import BaseModel
 
 
@@ -15,16 +16,39 @@ class Item(ItemBase):
     class Config:
         orm_mode = True
 
+class PostBase(BaseModel):
+    owner_id: str
+    response_to: int | None = None
+    content: str
+    picture: int | None = None
+    
+
+class Post(PostBase):
+    id: int
+    like_count : int
+    class Config:
+        orm_mode = True
+
+class PostCreate(PostBase):
+    pass
+
 
 class UserBase(BaseModel): #common data while creating or reading data!
     email: str
+    name: str
+    intro: str
+    birthday: str
 
 class UserCreate(UserBase): 
     password: str
 
 class User(UserBase): #these are for reading data!
-    is_active: bool
+    posts: list[Post] = []
     items: list[Item] = [] #uses lazy eval!
-
     class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
         orm_mode = True
+
+
+
+
+

@@ -1,6 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-
 from .database import Base
 
 #classes that inherit from Base are the SQLAlchemy models!
@@ -18,15 +17,15 @@ class User(Base):
 
 class Post(Base):
     __tablename__ = "posts"
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(String, ForeignKey("users.email"))
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    owner_id = Column(String, ForeignKey("users.email"), nullable=False)
     response_to = Column(Integer, ForeignKey("posts.id"), nullable=True)
     content = Column(String)
-    picture = Column(Integer, ForeignKey("photos.id"))
+    picture = Column(Integer, ForeignKey("photos.id"), nullable=True)
     like_count = Column(Integer, default=0)
-    responses = relationship('Post', back_populates='parent_post', remote_side=[id])
-    parent_post = relationship('Post', back_populates='responses', remote_side=[id])
-
+    owner = relationship("User", back_populates="posts")
+    responses = relationship("Post", back_populates="parent_post", remote_side=[id])
+    parent_post = relationship("Post", back_populates="responses")
 
 class Photo(Base):
     __tablename__ = "photos"
