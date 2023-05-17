@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Body, Depends, Request, HTTPException
-from app.model import PostSchema, UserLoginSchema, UserSchema
+from fastapi import FastAPI, Depends, Request, HTTPException
 from app.auth.jwt_handler import signJWT 
 from app.auth.jwt_bearer import jwtBearer
 from sqlalchemy.orm import Session
@@ -59,7 +58,7 @@ def get_post_by_id(id: int, db: Session = Depends(get_db)):
 
 #retrieve post by user
 @app.get("/user/{user_id}/posts", tags=["posts"], response_model=list[schemas.Post])
-def get_posts_by_userid(user_id : str, db: Session = Depends(get_db)):
+def get_post_by_userid(user_id : str, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found!")
@@ -95,7 +94,7 @@ def user_signup(user: schemas.UserCreate, db: Session = Depends(get_db)): #!!! l
     return crud.create_user(db=db, user=user) #for this to work response model must be declared!
     
 @app.post("/user/login", tags=["user"])
-def user_login(user: UserLoginSchema, db: Session = Depends(get_db)): #UserCreate has password!
+def user_login(user: schemas.UserLogin, db: Session = Depends(get_db)): #UserCreate has password!
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         return signJWT(user.email)

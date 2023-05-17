@@ -1,5 +1,5 @@
 from __future__ import annotations #allows self referencing classes
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class ItemBase(BaseModel):
@@ -32,9 +32,12 @@ class Post(PostBase):
 class PostCreate(PostBase):
     pass
 
-
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    
 class UserBase(BaseModel): #common data while creating or reading data!
-    email: str
+    email: EmailStr
     name: str
     intro: str
     birthday: str

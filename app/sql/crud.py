@@ -28,21 +28,7 @@ def create_post(db: Session, post: schemas.PostCreate):
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
-    print(db_post.response_to)
-    print(db_post.responses)
-    print(db_post.parent_post)
     return db_post
 
 def get_post_replies(db: Session, postid: int):
     return db.query(models.Post).filter(models.Post.response_to == postid).all()
-
-
-def get_items(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Item).offset(skip).limit(limit).all()
-
-def create_user_item(db: Session, item: schemas.ItemCreate, user_email: str):
-    db_item = models.Item(**item.dict(), owner_id=user_email) #the dict thing only works if all key value pairs match!
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
