@@ -53,9 +53,9 @@ class User(UserBase): #these are for reading data!
 
 
 class FileBase(BaseModel):
-    pass
+    file_ending: str
 
-class File(BaseModel):
+class File(FileBase):
     id: int
     file_path: str
     class Config:
@@ -63,6 +63,7 @@ class File(BaseModel):
 
 class FileCreate(FileBase):
     post: int
+
 
 
 

@@ -28,3 +28,4 @@ class File(Base):
     id = Column(Integer, primary_key=True, index=True)
     post = Column(Integer, ForeignKey("posts.id"), nullable=True)
     file_path = Column(String, nullable=True)
+    file_ending = Column(String)

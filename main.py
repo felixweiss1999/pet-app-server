@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.sql import models, crud, schemas
 from app.sql.database import SessionLocal, engine
 from fastapi.responses import FileResponse
-import aiofiles
+import aiofiles, mimetypes
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -96,19 +96,25 @@ async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_id(db=db, fileid=file_id)
     if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
-    return db_file.file_path
+    mimetype = mimetypes.guess_type(db_file.file_path)[0]
+    print(mimetype)
+    if mimetypes is None:
+        
+        return FileResponse(path=db_file.file_path)
+    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
 
 @app.post("/file", tags=["file"])
-async def create_file(post_id: int, file: UploadFile, db: Session = Depends(get_db)):
+async def create_file(post_id: int, fileending: str, file: UploadFile, db: Session = Depends(get_db)):
     # create db entry, then write to disk using id as filename
-    db_file = crud.create_file(db=db,file=schemas.FileCreate(post=post_id))
+    db_file = crud.create_file(db=db,file=schemas.FileCreate(post=post_id, file_ending=fileending))
+    crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}.{db_file.file_ending}")
     try:
-        async with aiofiles.open(f"files/{db_file.id}", 'wb') as out_file:
-            content = await file.file.read()  # async read
+        async with aiofiles.open(f"files/{db_file.id}.{db_file.file_ending}", 'wb') as out_file:
+            content = file.file.read()  # async read
             await out_file.write(content)  # async write
-    except:
-        crud.delete_file(db=db, fileid=db_file.id)
+    except Exception as e:
+        print(e)
+        #crud.delete_file(db=db, fileid=db_file.id)
         raise HTTPException(status_code=404, detail="Error when storing file!")
-    file.close()
-    crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}")
+    await file.close()
     return {"id": db_file.id}
