@@ -91,18 +91,24 @@ async def get_user_by_email(user_id: str, db: Session = Depends(get_db)):
 
 
 #file
-@app.get("/file/{file_id}", response_class=FileResponse, tags=["file"])
+@app.get("/file/{file_id}", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
 async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
-    db_filename = crud.get_filename_by_id(db=db, fileid=file_id)
-    if db_filename is None:
+    db_file = crud.get_filename_by_id(db=db, fileid=file_id)
+    if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
-    return db_filename
+    return db_file.file_path
 
 @app.post("/file", tags=["file"])
 async def create_file(post_id: int, file: UploadFile, db: Session = Depends(get_db)):
     # create db entry, then write to disk using id as filename
     db_file = crud.create_file(db=db,file=schemas.FileCreate(post=post_id))
-    async with aiofiles.open(out_file_path, 'wb') as out_file:
-        content = await in_file.read()  # async read
-        await out_file.write(content)  # async write
-    return {"id": file.filename}
+    try:
+        async with aiofiles.open(f"files/{db_file.id}", 'wb') as out_file:
+            content = await file.file.read()  # async read
+            await out_file.write(content)  # async write
+    except:
+        crud.delete_file(db=db, fileid=db_file.id)
+        raise HTTPException(status_code=404, detail="Error when storing file!")
+    file.close()
+    crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}")
+    return {"id": db_file.id}

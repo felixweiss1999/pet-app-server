@@ -43,3 +43,16 @@ def create_file(db: Session, file: schemas.FileCreate):
     db.commit()
     db.refresh(db_file)
     return db_file
+
+def set_filepath(db: Session, fileid: int, filepath: str):
+    db_file = db.query(models.File).filter(models.File.id == fileid).first()
+    db_file.file_path = filepath
+    db.commit()
+    db.refresh(db_file)
+    return db_file
+
+def delete_file(db: Session, fileid: int):
+    db_file = db.query(models.File).filter(models.File.id == fileid).first()
+    db.delete(db_file)
+    db.commit()
+
