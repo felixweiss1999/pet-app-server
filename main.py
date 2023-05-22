@@ -116,6 +116,27 @@ async def create_file_for_post(post_id: int, fileending: str, file: UploadFile, 
     await file.close()
     return {"id": db_file.id}
 
+@app.post("/file", dependencies=[Depends(jwtBearer())], tags=["file"])
+async def create_file_as_profile_picture(email: str, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
+    #check if post owner is currently logged-in user
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if email != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot upload profile picture of someone else!")
+    
+    db_file = crud.create_file(db=db,file=schemas.FileCreate(post=None, file_ending=fileending, user=email))
+    crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}.{db_file.file_ending}")
+    try:
+        async with aiofiles.open(f"files/{db_file.id}.{db_file.file_ending}", 'wb') as out_file:
+            content = file.file.read()  # async read
+            await out_file.write(content)  # async write
+    except Exception as e:
+        print(e)
+        crud.delete_file(db=db, fileid=db_file.id)
+        raise HTTPException(status_code=404, detail="Error when storing file!")
+    await file.close()
+    return {"id": db_file.id}
+
 @app.get("/file/{file_id}", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
 async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_id(db=db, fileid=file_id)
@@ -137,3 +158,15 @@ async def get_file_by_post(post_id: int, db: Session = Depends(get_db)):
     if mimetypes is None:
         return FileResponse(path=db_file.file_path)
     return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
+
+@app.get("/{user_id}/profile_picture", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
+async def get_profile_picture(user_id: str, db: Session = Depends(get_db)):
+    db_file = crud.get_filename_by_user(db=db, userid=user_id)
+    if db_file is None:
+        raise HTTPException(status_code=404, detail="User does not have a profile picture!")
+    mimetype = mimetypes.guess_type(db_file.file_path)[0]
+    print(mimetype)
+    if mimetypes is None:
+        return FileResponse(path=db_file.file_path)
+    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
+

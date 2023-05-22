@@ -15,6 +15,11 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user) #refresh instance so that new additions (like new id) take effect in code as well
     return db_user
 
+def get_filename_by_user(db: Session, userid: str):
+    return db.query(models.File).filter(models.File.user == userid).first()
+
+
+
 
 #posts
 def get_posts(db: Session, skip: int = 0, limit: int = 100):
@@ -35,6 +40,9 @@ def get_post_replies(db: Session, postid: int):
 
 def get_filename_by_post(db: Session, postid: int):
     return db.query(models.File).filter(models.File.post == postid).first()
+
+
+
 
 #file
 def get_filename_by_id(db: Session, fileid: int):

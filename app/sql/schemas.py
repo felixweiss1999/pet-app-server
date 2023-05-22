@@ -54,6 +54,8 @@ class User(UserBase): #these are for reading data!
 
 class FileBase(BaseModel):
     file_ending: str
+    post: int | None
+    user: str | None = None
 
 class File(FileBase):
     id: int
@@ -62,7 +64,9 @@ class File(FileBase):
         orm_mode = True
 
 class FileCreate(FileBase):
-    post: int
+    pass
+    
+
 
 
 
