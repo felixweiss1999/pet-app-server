@@ -91,21 +91,18 @@ async def get_user_by_email(user_id: str, db: Session = Depends(get_db)):
 
 
 #file
-@app.get("/file/{file_id}", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
-async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
-    db_file = crud.get_filename_by_id(db=db, fileid=file_id)
-    if db_file is None:
-        raise HTTPException(status_code=404, detail="File not found")
-    mimetype = mimetypes.guess_type(db_file.file_path)[0]
-    print(mimetype)
-    if mimetypes is None:
-        
-        return FileResponse(path=db_file.file_path)
-    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
-
-@app.post("/file", tags=["file"])
-async def create_file(post_id: int, fileending: str, file: UploadFile, db: Session = Depends(get_db)):
-    # create db entry, then write to disk using id as filename
+@app.post("/file", dependencies=[Depends(jwtBearer())], tags=["file"])
+async def create_file_for_post(post_id: int, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
+    #check if post exists
+    post = crud.get_post_by_id(db=db, id=post_id)
+    if post == None:
+        raise HTTPException(status_code=404, detail="Post does not exist!")
+    #check if post owner is currently logged-in user
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if post.owner_id != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot upload file for post of someone else!")
+    
     db_file = crud.create_file(db=db,file=schemas.FileCreate(post=post_id, file_ending=fileending))
     crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}.{db_file.file_ending}")
     try:
@@ -114,7 +111,29 @@ async def create_file(post_id: int, fileending: str, file: UploadFile, db: Sessi
             await out_file.write(content)  # async write
     except Exception as e:
         print(e)
-        #crud.delete_file(db=db, fileid=db_file.id)
+        crud.delete_file(db=db, fileid=db_file.id)
         raise HTTPException(status_code=404, detail="Error when storing file!")
     await file.close()
     return {"id": db_file.id}
+
+@app.get("/file/{file_id}", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
+async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
+    db_file = crud.get_filename_by_id(db=db, fileid=file_id)
+    if db_file is None:
+        raise HTTPException(status_code=404, detail="File not found")
+    mimetype = mimetypes.guess_type(db_file.file_path)[0]
+    print(mimetype)
+    if mimetypes is None:
+        return FileResponse(path=db_file.file_path)
+    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
+
+@app.get("/{post_id}/file", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
+async def get_file_by_post(post_id: int, db: Session = Depends(get_db)):
+    db_file = crud.get_filename_by_post(db=db, postid=post_id)
+    if db_file is None:
+        raise HTTPException(status_code=404, detail="Post does not have any files")
+    mimetype = mimetypes.guess_type(db_file.file_path)[0]
+    print(mimetype)
+    if mimetypes is None:
+        return FileResponse(path=db_file.file_path)
+    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)

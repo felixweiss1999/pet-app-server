@@ -33,7 +33,10 @@ def create_post(db: Session, post: schemas.PostCreate):
 def get_post_replies(db: Session, postid: int):
     return db.query(models.Post).filter(models.Post.response_to == postid).all()
 
-#filename retrieve
+def get_filename_by_post(db: Session, postid: int):
+    return db.query(models.File).filter(models.File.post == postid).first()
+
+#file
 def get_filename_by_id(db: Session, fileid: int):
     return db.query(models.File).filter(models.File.id == fileid).first()
 
@@ -55,4 +58,6 @@ def delete_file(db: Session, fileid: int):
     db_file = db.query(models.File).filter(models.File.id == fileid).first()
     db.delete(db_file)
     db.commit()
+
+
 
