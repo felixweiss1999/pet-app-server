@@ -85,7 +85,7 @@ async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, requ
     except Exception as e:
         print(e)
         crud.delete_file(db=db, fileid=db_file.id)
-        raise HTTPException(status_code=404, detail="Error when storing file!")
+        raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
     await file.close()
     return {"id": db_file.id}
 
@@ -143,7 +143,7 @@ async def upload_profile_picture(user_id: str, fileending: str, file: UploadFile
     except Exception as e:
         print(e)
         crud.delete_file(db=db, fileid=db_file.id)
-        raise HTTPException(status_code=404, detail="Error when storing file!")
+        raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
     await file.close()
     return {"id": db_file.id}
 
