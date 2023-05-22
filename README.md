@@ -3,3 +3,5 @@ Backend implementation based on FastAPI in Python. For Flutter Application 'Pet-
 
 ## required packages
 fastapi, uvicorn, PyJWT, python-decouple, sqlalchemy
+to run:
+uvicorn main:app --reload
