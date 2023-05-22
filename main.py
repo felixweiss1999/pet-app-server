@@ -57,6 +57,8 @@ async def add_post(post: schemas.PostCreate, request : Request, db: Session = De
     confirmeduid : str = await useMeToExtract(request=request)
     if post.owner_id != confirmeduid:
         raise HTTPException(status_code=403, detail="Cannot post as someone else!")
+    if post.response_to != 0 and crud.get_post_by_id(db=db, id=post.response_to) is None:
+        raise HTTPException(status_code=404, detail="Cannot respond to nonexisting post!")
     db_user = crud.get_user_by_email(db=db,email=post.owner_id)
     if db_user is None:
         raise HTTPException(status_code=403, detail="User does not exist!")
@@ -90,13 +92,13 @@ async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, requ
 @app.get("/posts/{post_id}/file", response_class=FileResponse, tags=["posts"]) #FileResponse will handle everything from just returning the path to the file!
 async def get_file_by_post(post_id: int, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_post(db=db, postid=post_id)
-    if db_file is None:
+    if db_file[-1] is None:
         raise HTTPException(status_code=404, detail="Post does not have any files")
-    mimetype = mimetypes.guess_type(db_file.file_path)[0]
+    mimetype = mimetypes.guess_type(db_file[-1].file_path)[0]
     print(mimetype)
     if mimetypes is None:
-        return FileResponse(path=db_file.file_path)
-    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
+        return FileResponse(path=db_file[-1].file_path)
+    return FileResponse(path=db_file[-1].file_path, content_disposition_type=mimetype)
 
 
 
@@ -119,7 +121,7 @@ def user_login(user: schemas.UserLogin, db: Session = Depends(get_db)): #UserCre
 
 @app.get("/user/{user_id}", response_model=schemas.User, tags=["user"]) #User does not contain password!
 async def get_user_by_email(user_id: str, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, user_id=user_id)
+    db_user = crud.get_user_by_email(db, email=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
@@ -148,13 +150,13 @@ async def upload_profile_picture(user_id: str, fileending: str, file: UploadFile
 @app.get("/user/{user_id}/profile_picture", response_class=FileResponse, tags=["user"]) #FileResponse will handle everything from just returning the path to the file!
 async def get_profile_picture(user_id: str, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_user(db=db, userid=user_id)
-    if db_file is None:
+    if db_file[-1] is None:
         raise HTTPException(status_code=404, detail="User does not have a profile picture!")
-    mimetype = mimetypes.guess_type(db_file.file_path)[0]
+    mimetype = mimetypes.guess_type(db_file[-1].file_path)[0]
     print(mimetype)
     if mimetypes is None:
-        return FileResponse(path=db_file.file_path)
-    return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
+        return FileResponse(path=db_file[-1].file_path)
+    return FileResponse(path=db_file[-1].file_path, content_disposition_type=mimetype)
 
 
 

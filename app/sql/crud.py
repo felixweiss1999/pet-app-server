@@ -16,7 +16,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 def get_filename_by_user(db: Session, userid: str):
-    return db.query(models.File).filter(models.File.user == userid).first()
+    return db.query(models.File).filter(models.File.user == userid).all()
 
 
 
@@ -39,7 +39,7 @@ def get_post_replies(db: Session, postid: int):
     return db.query(models.Post).filter(models.Post.response_to == postid).all()
 
 def get_filename_by_post(db: Session, postid: int):
-    return db.query(models.File).filter(models.File.post == postid).first()
+    return db.query(models.File).filter(models.File.post == postid).all()
 
 
 
