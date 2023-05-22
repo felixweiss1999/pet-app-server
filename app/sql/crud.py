@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 
-
+#user
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
@@ -16,7 +16,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
-
+#posts
 def get_posts(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Post).offset(skip).limit(limit).all()
 
@@ -32,3 +32,14 @@ def create_post(db: Session, post: schemas.PostCreate):
 
 def get_post_replies(db: Session, postid: int):
     return db.query(models.Post).filter(models.Post.response_to == postid).all()
+
+#filename retrieve
+def get_filename_by_id(db: Session, fileid: int):
+    return db.query(models.File).filter(models.File.id == fileid).first()
+
+def create_file(db: Session, file: schemas.FileCreate):
+    db_file = models.File(**file.dict())
+    db.add(db_file)
+    db.commit()
+    db.refresh(db_file)
+    return db_file

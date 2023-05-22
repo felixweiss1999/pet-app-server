@@ -52,6 +52,17 @@ class User(UserBase): #these are for reading data!
         orm_mode = True
 
 
+class FileBase(BaseModel):
+    pass
+
+class File(BaseModel):
+    id: int
+    file_path: str
+    class Config:
+        orm_mode = True
+
+class FileCreate(FileBase):
+    post: int
 
 
 
