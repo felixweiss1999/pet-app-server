@@ -181,3 +181,37 @@ async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
 
 
 
+# chat: send message, add file to message
+
+@app.post("/chat/create", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=schemas.Chat)
+async def create_chat(chat: schemas.ChatCreate, request: Request, db: Session = Depends(get_db)):
+    if chat.user1 == chat.user2:
+        raise HTTPException(status_code=404, detail="Cannot create chat to oneself!")
+    if crud.get_user_by_email(db=db, email=chat.user1) == None or crud.get_user_by_email(db=db, email=chat.user2) == None:
+        raise HTTPException(status_code=404, detail="One of the users does not exist!")
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if chat.user1 != confirmeduid and chat.user2 != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot open chat for someone else!")
+    if crud.get_chats_by_user(db=db, uid=chat.user1, uid2=chat.user2) != []:
+        print(crud.get_chats_by_user(db=db, uid=chat.user1, uid2=chat.user2))
+        raise HTTPException(status_code=404, detail="Error: Chat already exists!")
+    return crud.create_chat(db=db, chat=chat) 
+
+@app.get("/{user_id}/chats", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=list[schemas.Chat])
+async def get_chats_by_user(user_id: str, request: Request, db: Session = Depends(get_db)):
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if user_id != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot get chats of someone else!")
+    return crud.get_chats_by_user(db=db, uid=user_id)
+
+@app.get("/{chat_id}/messages", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=list[schemas.Message])
+async def get_messages_by_chat(chat_id: int, request: Request, db: Session = Depends(get_db)):
+    db_chat = crud.get_chat_by_id(db=db, chatid=chat_id)
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if db_chat.user1 != confirmeduid and db_chat.user2 != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot get messages of someone elses chat!")
+    return db_chat.messages
+
