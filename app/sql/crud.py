@@ -38,8 +38,7 @@ def create_post(db: Session, post: schemas.PostCreate):
 def get_post_replies(db: Session, postid: int):
     return db.query(models.Post).filter(models.Post.response_to == postid).all()
 
-def get_filename_by_post(db: Session, postid: int):
-    return db.query(models.File).filter(models.File.post == postid).all()
+
 
 
 

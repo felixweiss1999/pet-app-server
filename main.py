@@ -91,7 +91,7 @@ async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, requ
 
 @app.get("/posts/{post_id}/file", response_class=FileResponse, tags=["posts"]) #FileResponse will handle everything from just returning the path to the file!
 async def get_file_by_post(post_id: int, db: Session = Depends(get_db)):
-    db_file = crud.get_filename_by_post(db=db, postid=post_id)
+    db_file = crud.get_post_by_id(db=db, id=post_id).files
     if db_file[-1] is None:
         raise HTTPException(status_code=404, detail="Post does not have any files")
     mimetype = mimetypes.guess_type(db_file[-1].file_path)[0]

@@ -51,7 +51,35 @@ class FileCreate(FileBase):
     pass
     
 
+class ChatBase(BaseModel):
+    user1: str
+    user2: str
 
+class Chat(ChatBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+class ChatCreate(ChatBase):
+    pass
+
+
+
+class MessageBase(BaseModel):
+    chat: int
+    owner: str
+    content: str
+    timestamp: int
+
+class Message(MessageBase):
+    id: int
+    files: list[File] = []
+    class Config:
+        orm_mode = True
+    
+
+class MessageCreate(MessageBase):
+    pass
 
 
 

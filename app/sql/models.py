@@ -20,11 +20,30 @@ class Post(Base):
     content = Column(String)
     like_count = Column(Integer, default=0)
     owner = relationship("User", back_populates="posts")
+    files = relationship("File", back_populates="ownerpost")
 
 class File(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
     post = Column(Integer, ForeignKey("posts.id"), nullable=True)
     user = Column(String, ForeignKey("users.email"), nullable=True)
+    message = Column(Integer, ForeignKey("messages.id"), nullable=True)
     file_path = Column(String, nullable=True)
     file_ending = Column(String)
+    ownerpost = relationship("Post", back_populates="files")
+    ownermessage = relationship("Message", back_populates="files")
+
+class Chat(Base):
+    __tablename__ = "chats"
+    id = Column(Integer, primary_key=True)
+    user1 = Column(String, ForeignKey("users.email"), nullable=False)
+    user2 = Column(String, ForeignKey("users.email"), nullable=False)
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True)
+    chat = Column(Integer, ForeignKey("chats.id"), nullable=False)
+    owner = Column(String, ForeignKey("users.email"), nullable=False)
+    content = Column(String)
+    timestamp = Column(Integer, nullable=False)
+    files = relationship("File", back_populates="ownermessage")
