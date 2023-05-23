@@ -1,45 +1,17 @@
-from __future__ import annotations #allows self referencing classes
+#from __future__ import annotations #allows self referencing classes
 from pydantic import BaseModel, EmailStr
 
 
-class PostBase(BaseModel):
-    owner_id: str
-    response_to: int | None = None
-    content: str
-    
 
-class Post(PostBase):
-    id: int
-    like_count : int
-    class Config:
-        orm_mode = True
 
-class PostCreate(PostBase):
-    pass
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-    
-class UserBase(BaseModel): #common data while creating or reading data!
-    email: EmailStr
-    name: str
-    intro: str
-    birthday: str
-
-class UserCreate(UserBase): 
-    password: str
-
-class User(UserBase): #these are for reading data!
-    posts: list[Post] = []
-    class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
-        orm_mode = True
 
 
 class FileBase(BaseModel):
     file_ending: str
     post: int | None
     user: str | None = None
+    message: int | None
 
 class File(FileBase):
     id: int
@@ -69,10 +41,11 @@ class MessageBase(BaseModel):
     chat: int
     owner: str
     content: str
-    timestamp: int
+    
 
 class Message(MessageBase):
     id: int
+    timestamp: int
     files: list[File] = []
     class Config:
         orm_mode = True
@@ -83,3 +56,38 @@ class MessageCreate(MessageBase):
 
 
 
+class PostBase(BaseModel):
+    owner_id: str
+    response_to: int | None = None
+    content: str
+    
+
+class Post(PostBase):
+    id: int
+    like_count : int
+    files: list[File] = []
+    class Config:
+        orm_mode = True
+
+class PostCreate(PostBase):
+    pass
+
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    
+class UserBase(BaseModel): #common data while creating or reading data!
+    email: EmailStr
+    name: str
+    intro: str
+    birthday: str
+
+class UserCreate(UserBase): 
+    password: str
+
+class User(UserBase): #these are for reading data!
+    posts: list[Post] = []
+    class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
+        orm_mode = True

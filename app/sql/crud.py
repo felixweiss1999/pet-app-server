@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-
+import time
 #user
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
@@ -83,3 +83,13 @@ def get_chats_by_user(db: Session, uid: str, uid2: str = None):
 
 def get_chat_by_id(db: Session, chatid: int):
     return db.query(models.Chat).filter(models.Chat.id == chatid).first()
+
+def get_message_by_id(db: Session, messageid: int):
+    return db.query(models.Message).filter(models.Message.id == messageid).first()
+
+def create_message(db: Session, message: schemas.MessageCreate):
+    db_message = models.Message(**message.dict(), timestamp=time.time())
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    return db_message

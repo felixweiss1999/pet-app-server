@@ -64,7 +64,7 @@ async def add_post(post: schemas.PostCreate, request : Request, db: Session = De
         raise HTTPException(status_code=403, detail="User does not exist!")
     return crud.create_post(db=db, post=post)
 
-@app.post("/posts/{post_id}/file", dependencies=[Depends(jwtBearer())], tags=["posts"])
+@app.post("/posts/{post_id}/file", dependencies=[Depends(jwtBearer())], tags=["posts"], response_model=schemas.File)
 async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
     #check if post exists
     post = crud.get_post_by_id(db=db, id=post_id)
@@ -87,18 +87,8 @@ async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, requ
         crud.delete_file(db=db, fileid=db_file.id)
         raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
     await file.close()
-    return {"id": db_file.id}
+    return db_file
 
-@app.get("/posts/{post_id}/file", response_class=FileResponse, tags=["posts"]) #FileResponse will handle everything from just returning the path to the file!
-async def get_file_by_post(post_id: int, db: Session = Depends(get_db)):
-    db_file = crud.get_post_by_id(db=db, id=post_id).files
-    if db_file[-1] is None:
-        raise HTTPException(status_code=404, detail="Post does not have any files")
-    mimetype = mimetypes.guess_type(db_file[-1].file_path)[0]
-    print(mimetype)
-    if mimetypes is None:
-        return FileResponse(path=db_file[-1].file_path)
-    return FileResponse(path=db_file[-1].file_path, content_disposition_type=mimetype)
 
 
 
@@ -126,7 +116,7 @@ async def get_user_by_email(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-@app.post("/user/{user_id}/profile_picture", dependencies=[Depends(jwtBearer())], tags=["user"])
+@app.post("/user/{user_id}/profile_picture", dependencies=[Depends(jwtBearer())], tags=["user"], response_model=schemas.File)
 async def upload_profile_picture(user_id: str, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
     #check if post owner is currently logged-in user
     useMeToExtract = jwtBearer()
@@ -145,7 +135,7 @@ async def upload_profile_picture(user_id: str, fileending: str, file: UploadFile
         crud.delete_file(db=db, fileid=db_file.id)
         raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
     await file.close()
-    return {"id": db_file.id}
+    return db_file
 
 @app.get("/user/{user_id}/profile_picture", response_class=FileResponse, tags=["user"]) #FileResponse will handle everything from just returning the path to the file!
 async def get_profile_picture(user_id: str, db: Session = Depends(get_db)):
@@ -166,13 +156,19 @@ async def get_profile_picture(user_id: str, db: Session = Depends(get_db)):
 
 #file
 
-@app.get("/file/{file_id}", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
-async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
+@app.get("/file/{file_id}", response_class=FileResponse, dependencies=[Depends(jwtBearer())], tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
+async def get_file_by_id(file_id: int, request: Request, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_id(db=db, fileid=file_id)
     if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
+    if db_file.message is not None: #perform security check by getting chat of message of file
+        db_message = crud.get_message_by_id(db=db, messageid=db_file.message)
+        db_chat = crud.get_chat_by_id(db=db, chatid=db_message.chat)
+        useMeToExtract = jwtBearer()
+        confirmeduid : str = await useMeToExtract(request=request)
+        if db_chat.user1 != confirmeduid and db_chat.user2 != confirmeduid:
+            raise HTTPException(status_code=404, detail="Not allowed to get file of other chat!")
     mimetype = mimetypes.guess_type(db_file.file_path)[0]
-    print(mimetype)
     if mimetypes is None:
         return FileResponse(path=db_file.file_path)
     return FileResponse(path=db_file.file_path, content_disposition_type=mimetype)
@@ -181,7 +177,7 @@ async def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
 
 
 
-# chat: send message, add file to message
+# chat
 
 @app.post("/chat/create", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=schemas.Chat)
 async def create_chat(chat: schemas.ChatCreate, request: Request, db: Session = Depends(get_db)):
@@ -198,7 +194,7 @@ async def create_chat(chat: schemas.ChatCreate, request: Request, db: Session = 
         raise HTTPException(status_code=404, detail="Error: Chat already exists!")
     return crud.create_chat(db=db, chat=chat) 
 
-@app.get("/{user_id}/chats", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=list[schemas.Chat])
+@app.get("/user/{user_id}/chats", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=list[schemas.Chat])
 async def get_chats_by_user(user_id: str, request: Request, db: Session = Depends(get_db)):
     useMeToExtract = jwtBearer()
     confirmeduid : str = await useMeToExtract(request=request)
@@ -206,7 +202,7 @@ async def get_chats_by_user(user_id: str, request: Request, db: Session = Depend
         raise HTTPException(status_code=403, detail="Cannot get chats of someone else!")
     return crud.get_chats_by_user(db=db, uid=user_id)
 
-@app.get("/{chat_id}/messages", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=list[schemas.Message])
+@app.get("/chat/{chat_id}/messages", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=list[schemas.Message])
 async def get_messages_by_chat(chat_id: int, request: Request, db: Session = Depends(get_db)):
     db_chat = crud.get_chat_by_id(db=db, chatid=chat_id)
     useMeToExtract = jwtBearer()
@@ -215,3 +211,40 @@ async def get_messages_by_chat(chat_id: int, request: Request, db: Session = Dep
         raise HTTPException(status_code=403, detail="Cannot get messages of someone elses chat!")
     return db_chat.messages
 
+@app.post("/chat/sendmsg", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=schemas.Message)
+async def send_message(msg: schemas.MessageCreate, request: Request, db: Session = Depends(get_db)):
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if msg.owner != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot send message as someone else!")
+    db_chat = crud.get_chat_by_id(db=db, chatid=msg.chat)
+    if db_chat is None:
+        raise HTTPException(status_code=404, detail="Chat does not exist!")
+    if db_chat.user1 != msg.owner and db_chat.user2 != msg.owner:
+        raise HTTPException(status_code=400, detail="Cannot send message in someone elses chat!")
+    return crud.create_message(db=db, message=msg)
+
+@app.post("/chat/{message_id}/file", dependencies=[Depends(jwtBearer())], tags=["chat"], response_model=schemas.File)
+async def add_file_to_message(message_id: int, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
+    #check if message exists
+    db_message = crud.get_message_by_id(db=db,messageid=message_id)
+    if db_message == None:
+        raise HTTPException(status_code=404, detail="Message does not exist!")
+    #check if message owner is currently logged-in user
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if db_message.owner != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot upload file for message of someone else!")
+    
+    db_file = crud.create_file(db=db,file=schemas.FileCreate(message=message_id, file_ending=fileending))
+    crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}.{db_file.file_ending}")
+    try:
+        async with aiofiles.open(f"files/{db_file.id}.{db_file.file_ending}", 'wb') as out_file:
+            content = file.file.read()  # async read
+            await out_file.write(content)  # async write
+    except Exception as e:
+        print(e)
+        crud.delete_file(db=db, fileid=db_file.id)
+        raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
+    await file.close()
+    return db_file
