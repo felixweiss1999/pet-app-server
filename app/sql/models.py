@@ -38,6 +38,7 @@ class Chat(Base):
     id = Column(Integer, primary_key=True)
     user1 = Column(String, ForeignKey("users.email"), nullable=False)
     user2 = Column(String, ForeignKey("users.email"), nullable=False)
+    messages = relationship("Message", back_populates="ownerchat")
 
 class Message(Base):
     __tablename__ = "messages"
@@ -47,3 +48,4 @@ class Message(Base):
     content = Column(String)
     timestamp = Column(Integer, nullable=False)
     files = relationship("File", back_populates="ownermessage")
+    ownerchat = relationship("Chat", back_populates="messages")

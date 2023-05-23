@@ -68,3 +68,18 @@ def delete_file(db: Session, fileid: int):
 
 
 
+#chat
+def create_chat(db: Session, chat: schemas.ChatCreate):
+    db_chat = models.Chat(**chat.dict())
+    db.add(db_chat)
+    db.commit()
+    db.refresh(db_chat)
+    return db_chat
+
+def get_chats_by_user(db: Session, uid: str, uid2: str = None):
+    if uid2 is None:
+        return db.query(models.Chat).filter(models.Chat.user1 == uid).all() + db.query(models.Chat).filter(models.Chat.user2 == uid).all() 
+    return db.query(models.Chat).filter(models.Chat.user1 == uid, models.Chat.user2 == uid2).all() + db.query(models.Chat).filter(models.Chat.user1 == uid2, models.Chat.user2 == uid).all()
+
+def get_chat_by_id(db: Session, chatid: int):
+    return db.query(models.Chat).filter(models.Chat.id == chatid).first()
