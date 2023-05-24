@@ -18,6 +18,15 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_filename_by_user(db: Session, userid: str):
     return db.query(models.File).filter(models.File.user == userid).all()
 
+def edit_user(db: Session, user: schemas.UserCreate):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    db_user.birthday = user.birthday
+    db_user.intro = user.intro
+    db_user.name = user.name
+    db_user.password = user.password
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 
 

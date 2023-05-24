@@ -52,7 +52,7 @@ def get_replies_to_post(postid : int, db: Session = Depends(get_db)):
     return crud.get_post_replies(db=db, postid=postid)
 
 @app.post("/posts", dependencies=[Depends(jwtBearer())], tags=["posts"], response_model=schemas.Post) # remove dependency for production!
-async def add_post(post: schemas.PostCreate, request : Request, db: Session = Depends(get_db)):
+async def create_post(post: schemas.PostCreate, request : Request, db: Session = Depends(get_db)):
     useMeToExtract = jwtBearer()
     confirmeduid : str = await useMeToExtract(request=request)
     if post.owner_id != confirmeduid:
@@ -65,7 +65,7 @@ async def add_post(post: schemas.PostCreate, request : Request, db: Session = De
     return crud.create_post(db=db, post=post)
 
 @app.post("/posts/{post_id}/file", dependencies=[Depends(jwtBearer())], tags=["posts"], response_model=schemas.File)
-async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
+async def upload_file_to_post(post_id: int, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
     #check if post exists
     post = crud.get_post_by_id(db=db, id=post_id)
     if post == None:
@@ -96,12 +96,23 @@ async def add_file_to_post(post_id: int, fileending: str, file: UploadFile, requ
 #user 
 
 @app.post("/user/signup", tags=["user"], response_model=schemas.User)
-def user_signup(user: schemas.UserCreate, db: Session = Depends(get_db)): #!!! lookup what this Body thing is in docs!
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)): #!!! lookup what this Body thing is in docs!
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="User already exists!")
     return crud.create_user(db=db, user=user) #for this to work response model must be declared!
     
+@app.post("/user/edit", tags=["user"], dependencies=[Depends(jwtBearer())], response_model=schemas.User)
+async def edit_user(user: schemas.UserCreate, request: Request, db: Session = Depends(get_db)): #!!! lookup what this Body thing is in docs!
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if user.email != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot edit profile of someone else!")
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user is None:
+        raise HTTPException(status_code=400, detail="User does not exists!")
+    return crud.edit_user(db=db, user=user)
+
 @app.post("/user/login", tags=["user"])
 def user_login(user: schemas.UserLogin, db: Session = Depends(get_db)): #UserCreate has password!
     db_user = crud.get_user_by_email(db, email=user.email)
@@ -138,7 +149,7 @@ async def upload_profile_picture(user_id: str, fileending: str, file: UploadFile
     return db_file
 
 @app.get("/user/{user_id}/profile_picture", response_class=FileResponse, tags=["user"]) #FileResponse will handle everything from just returning the path to the file!
-async def get_profile_picture(user_id: str, db: Session = Depends(get_db)):
+async def download_profile_picture(user_id: str, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_user(db=db, userid=user_id)
     if db_file[-1] is None:
         raise HTTPException(status_code=404, detail="User does not have a profile picture!")
@@ -157,7 +168,7 @@ async def get_profile_picture(user_id: str, db: Session = Depends(get_db)):
 #file
 
 @app.get("/file/{file_id}", response_class=FileResponse, dependencies=[Depends(jwtBearer())], tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
-async def get_file_by_id(file_id: int, request: Request, db: Session = Depends(get_db)):
+async def download_file_by_id(file_id: int, request: Request, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_id(db=db, fileid=file_id)
     if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
@@ -250,7 +261,7 @@ async def add_file_to_message(message_id: int, fileending: str, file: UploadFile
     return db_file
 
 
-#pet: add pet, add file to pet
+#pet:
 @app.post("/pet/createOrEdit", tags=["pet"], dependencies=[Depends(jwtBearer())], response_model=schemas.Pet)
 async def create_or_edit_pet(pet: schemas.PetCreate, request: Request, db: Session = Depends(get_db), pet_id: int = None):
     if crud.get_user_by_email(db=db, email=pet.owner) == None:
@@ -265,6 +276,35 @@ async def create_or_edit_pet(pet: schemas.PetCreate, request: Request, db: Sessi
         raise HTTPException(status_code=404, detail="Trying to edit nonexistent pet!")
     return crud.create_pet(db=db, pet=pet) 
 
+@app.get("/user/{user_id}/pets", tags=["pet"], response_model=list[schemas.Pet])
+async def get_pets_by_user(user_id: str, db: Session = Depends(get_db)):
+    if crud.get_user_by_email(db=db, email=user_id) is None:
+        raise HTTPException(status_code=403, detail="User does not exist!")
+    return crud.get_user_by_email(db=db, email=user_id).pets
 
 
-#later: edit user, edit pet (just extend the respective create functions!)
+@app.post("/pet/{pet_id}/file", dependencies=[Depends(jwtBearer())], tags=["pet"], response_model=schemas.File)
+async def upload_file_to_pet(pet_id: int, fileending: str, file: UploadFile, request : Request, db: Session = Depends(get_db)):
+    #check if pet exists
+    db_pet = crud.get_pet_by_id(db=db,petid=pet_id)
+    if db_pet == None:
+        raise HTTPException(status_code=404, detail="Pet does not exist!")
+    #check if message owner is currently logged-in user
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if db_pet.owner != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot upload file for pet of someone else!")
+    
+    db_file = crud.create_file(db=db,file=schemas.FileCreate(pet=pet_id, file_ending=fileending))
+    crud.set_filepath(db=db, fileid=db_file.id, filepath=f"files/{db_file.id}.{db_file.file_ending}")
+    try:
+        async with aiofiles.open(f"files/{db_file.id}.{db_file.file_ending}", 'wb') as out_file:
+            content = file.file.read()  # async read
+            await out_file.write(content)  # async write
+    except Exception as e:
+        print(e)
+        crud.delete_file(db=db, fileid=db_file.id)
+        raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
+    await file.close()
+    return db_file
+

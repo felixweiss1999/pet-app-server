@@ -12,6 +12,7 @@ class FileBase(BaseModel):
     post: int | None
     user: str | None = None
     message: int | None
+    pet: int | None
 
 class File(FileBase):
     id: int
@@ -74,23 +75,7 @@ class PostCreate(PostBase):
 
 
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-    
-class UserBase(BaseModel): #common data while creating or reading data!
-    email: EmailStr
-    name: str
-    intro: str
-    birthday: str
 
-class UserCreate(UserBase): 
-    password: str
-
-class User(UserBase): #these are for reading data!
-    posts: list[Post] = []
-    class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
-        orm_mode = True
 
 
 class PetBase(BaseModel):
@@ -109,3 +94,25 @@ class Pet(PetBase):
 
 class PetCreate(PetBase):
     pass
+
+
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    
+class UserBase(BaseModel): #common data while creating or reading data!
+    email: EmailStr
+    name: str
+    intro: str
+    birthday: str
+
+class UserCreate(UserBase): 
+    password: str
+
+class User(UserBase): #these are for reading data!
+    posts: list[Post] = []
+    pets: list[Pet] = []
+    class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
+        orm_mode = True

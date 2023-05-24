@@ -12,7 +12,7 @@ class User(Base):
     birthday = Column(String)
     posts = relationship("Post", back_populates="owner")
     pets = relationship("Pet", back_populates="owneruser")
-    
+
 class Post(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -29,6 +29,7 @@ class File(Base):
     post = Column(Integer, ForeignKey("posts.id"), nullable=True)
     user = Column(String, ForeignKey("users.email"), nullable=True)
     message = Column(Integer, ForeignKey("messages.id"), nullable=True)
+    pet = Column(Integer, ForeignKey("pets.id"), nullable=True)
     file_path = Column(String, nullable=True)
     file_ending = Column(String)
     ownerpost = relationship("Post", back_populates="files")
