@@ -78,5 +78,6 @@ class Like(Base):
     __tablename__ = "likes"
     liker = Column(String, ForeignKey("users.email"), primary_key=True)
     liked_post = Column(Integer, ForeignKey("posts.id"), primary_key=True)
+    timestamp = Column(Integer)
     likedpost = relationship("Post", back_populates="likes")
 

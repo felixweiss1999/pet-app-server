@@ -134,7 +134,7 @@ def get_pet_by_id(db: Session, petid: int):
 def toggle_like(db: Session, like: schemas.LikeCreate):
     db_like = db.query(models.Like).filter(models.Like.liker == like.liker, models.Like.liked_post == like.liked_post).first()
     if db_like is None:
-        db_like = models.Like(**like.dict())
+        db_like = models.Like(**like.dict(), timestamp=time.time())
         db.add(db_like)
         db.commit()
         return 1

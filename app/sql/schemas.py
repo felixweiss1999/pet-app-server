@@ -21,6 +21,7 @@ class LikeBase(BaseModel):
     
 
 class Like(LikeBase):
+    timestamp: int
     class Config:
         orm_mode = True
 
