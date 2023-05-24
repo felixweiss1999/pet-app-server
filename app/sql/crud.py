@@ -38,7 +38,7 @@ def get_post_by_id(db: Session, id: int):
     return db.query(models.Post).filter(models.Post.id == id).first()
 
 def create_post(db: Session, post: schemas.PostCreate):
-    db_post = models.Post(**post.dict())
+    db_post = models.Post(**post.dict(), timestamp=time.time())
     db.add(db_post)
     db.commit()
     db.refresh(db_post)

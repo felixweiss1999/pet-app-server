@@ -28,6 +28,7 @@ class Post(Base):
     owner_id = Column(String, ForeignKey("users.email"), nullable=False)
     response_to = Column(Integer, ForeignKey("posts.id"), nullable=True)
     content = Column(String)
+    timestamp = Column(Integer)
     owner = relationship("User", back_populates="posts")
     files = relationship("File", back_populates="ownerpost")
     likes = relationship("Like", back_populates="likedpost")

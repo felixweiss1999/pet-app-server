@@ -90,6 +90,7 @@ class Post(PostBase):
     id: int
     files: list[File] = []
     likes: list[Like] = []
+    timestamp: int
     class Config:
         orm_mode = True
 
