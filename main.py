@@ -116,9 +116,12 @@ async def edit_user(user: schemas.UserCreate, request: Request, db: Session = De
 @app.post("/user/login", tags=["user"])
 def user_login(user: schemas.UserLogin, db: Session = Depends(get_db)): #UserCreate has password!
     db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        return signJWT(user.email)
-    raise HTTPException(status_code=403, detail="Invalid login credentials!")
+    if db_user is None:
+        raise HTTPException(status_code=403, detail="User does not exist!")
+    if db_user.password != user.password:
+        raise HTTPException(status_code=403, detail="Invalid password!")
+    return signJWT(user.email)
+    
 
 @app.get("/user/{user_id}", response_model=schemas.User, tags=["user"]) #User does not contain password!
 async def get_user_by_email(user_id: str, db: Session = Depends(get_db)):
