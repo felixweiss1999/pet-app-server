@@ -91,3 +91,21 @@ class User(UserBase): #these are for reading data!
     posts: list[Post] = []
     class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
         orm_mode = True
+
+
+class PetBase(BaseModel):
+    owner: str
+    name: str
+    breed: str
+    gender: str
+    birthday: str
+    personality_labels: str
+
+class Pet(PetBase):
+    id: int
+    files: list[File] = []
+    class Config:
+        orm_mode = True
+
+class PetCreate(PetBase):
+    pass
