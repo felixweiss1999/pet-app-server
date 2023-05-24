@@ -11,7 +11,8 @@ class User(Base):
     intro = Column(String)
     birthday = Column(String)
     posts = relationship("Post", back_populates="owner")
-
+    pets = relationship("Pet", back_populates="owneruser")
+    
 class Post(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -32,6 +33,7 @@ class File(Base):
     file_ending = Column(String)
     ownerpost = relationship("Post", back_populates="files")
     ownermessage = relationship("Message", back_populates="files")
+    ownerpet = relationship("Pet", back_populates="files")
 
 class Chat(Base):
     __tablename__ = "chats"
@@ -49,3 +51,15 @@ class Message(Base):
     timestamp = Column(Integer, nullable=False)
     files = relationship("File", back_populates="ownermessage")
     ownerchat = relationship("Chat", back_populates="messages")
+
+class Pet(Base):
+    __tablename__ = "pets"
+    id = Column(Integer, primary_key=True)
+    owner = Column(String, ForeignKey("users.email"), nullable=False)
+    name = Column(String)
+    breed = Column(String)
+    gender = Column(String)
+    birthday = Column(String)
+    personality_labels = Column(String)
+    files = relationship("File", back_populates="ownerpet")
+    owneruser = relationship("User", back_populates="pets")
