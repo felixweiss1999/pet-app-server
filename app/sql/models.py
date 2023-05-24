@@ -22,6 +22,7 @@ class Post(Base):
     like_count = Column(Integer, default=0)
     owner = relationship("User", back_populates="posts")
     files = relationship("File", back_populates="ownerpost")
+    likes = relationship("Like", back_populates="likedpost")
 
 class File(Base):
     __tablename__ = "files"
@@ -64,3 +65,9 @@ class Pet(Base):
     personality_labels = Column(String)
     files = relationship("File", back_populates="ownerpet")
     owneruser = relationship("User", back_populates="pets")
+
+class Like(Base):
+    __tablename__ = "likes"
+    liker = Column(String, ForeignKey("users.email"), primary_key=True)
+    liked_post = Column(String, ForeignKey("posts.id"), primary_key=True)
+    likedpost = relationship("Post", back_populates="likes")

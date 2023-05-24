@@ -89,7 +89,17 @@ async def upload_file_to_post(post_id: int, fileending: str, file: UploadFile, r
     await file.close()
     return db_file
 
-
+@app.post("/posts/like", dependencies=[Depends(jwtBearer())], tags=["posts"]) # remove dependency for production!
+async def create_like(like: schemas.LikeCreate, request : Request, db: Session = Depends(get_db)):
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if like.liker != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot like as someone else!")
+    if crud.get_post_by_id(db=db, id=like.liked_post) is None:
+        raise HTTPException(status_code=403, detail="Cannot like nonexisting post!")
+    if crud.get_user_by_email(db=db,email=like.liker) is None:
+        raise HTTPException(status_code=403, detail="User does not exist!")
+    return {"like_status:", crud.toggle_like(db=db, like=like)}
 
 
 

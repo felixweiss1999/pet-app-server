@@ -3,7 +3,16 @@ from pydantic import BaseModel, EmailStr
 
 
 
+class LikeBase(BaseModel):
+    liker: str
+    
 
+class Like(LikeBase):
+    class Config:
+        orm_mode = True
+
+class LikeCreate(LikeBase):
+    liked_post: str
 
 
 
@@ -67,6 +76,7 @@ class Post(PostBase):
     id: int
     like_count : int
     files: list[File] = []
+    likes: list[Like] = []
     class Config:
         orm_mode = True
 
@@ -116,3 +126,6 @@ class User(UserBase): #these are for reading data!
     pets: list[Pet] = []
     class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
         orm_mode = True
+
+
+

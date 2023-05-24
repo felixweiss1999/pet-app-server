@@ -126,3 +126,19 @@ def edit_pet(db: Session, pet: schemas.PetCreate, petid: int):
 
 def get_pet_by_id(db: Session, petid: int):
     return db.query(models.Pet).filter(models.Pet.id == petid).first()
+
+
+
+
+# like
+def toggle_like(db: Session, like: schemas.LikeCreate):
+    db_like = db.query(models.Like).filter(models.Like.liker == like.liker, models.Like.liked_post == like.liked_post).first()
+    if db_like is None:
+        db_like = models.Like(**like.dict())
+        db.add(db_like)
+        db.commit()
+        return 1
+    else:
+        db.delete(db_like)
+        db.commit()
+        return 0
