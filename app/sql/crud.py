@@ -142,3 +142,16 @@ def toggle_like(db: Session, like: schemas.LikeCreate):
         db.delete(db_like)
         db.commit()
         return 0
+    
+#follow
+def toggle_follow(db: Session, follow: schemas.FollowCreate):
+    db_follow = db.query(models.Follow).filter(models.Follow.follower == follow.follower, models.Follow.follows == follow.follows).first()
+    if db_follow is None:
+        db_follow = models.Follow(**follow.dict(), timestamp=time.time())
+        db.add(db_follow)
+        db.commit()
+        return 1
+    else:
+        db.delete(db_follow)
+        db.commit()
+        return 0

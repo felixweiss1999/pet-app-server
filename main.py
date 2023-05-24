@@ -90,7 +90,7 @@ async def upload_file_to_post(post_id: int, fileending: str, file: UploadFile, r
     return db_file
 
 @app.post("/posts/like", dependencies=[Depends(jwtBearer())], tags=["posts"]) # remove dependency for production!
-async def create_like(like: schemas.LikeCreate, request : Request, db: Session = Depends(get_db)):
+async def toggle_like(like: schemas.LikeCreate, request : Request, db: Session = Depends(get_db)):
     useMeToExtract = jwtBearer()
     confirmeduid : str = await useMeToExtract(request=request)
     if like.liker != confirmeduid:
@@ -172,7 +172,17 @@ async def download_profile_picture(user_id: str, db: Session = Depends(get_db)):
         return FileResponse(path=db_file[-1].file_path)
     return FileResponse(path=db_file[-1].file_path, content_disposition_type=mimetype)
 
-
+@app.post("/user/follow", dependencies=[Depends(jwtBearer())], tags=["user"]) # remove dependency for production!
+async def toggle_follow(follow: schemas.FollowCreate, request : Request, db: Session = Depends(get_db)):
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if follow.follower != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot follow as someone else!")
+    if crud.get_user_by_email(db=db, email=follow.follows) is None:
+        raise HTTPException(status_code=403, detail="Cannot follow nonexistent user!")
+    if crud.get_user_by_email(db=db,email=follow.follower) is None:
+        raise HTTPException(status_code=403, detail="User does not exist!")
+    return {"like_status:": crud.toggle_follow(db=db, follow=follow)}
 
 
 

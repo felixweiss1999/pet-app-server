@@ -3,6 +3,12 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 #classes that inherit from Base are the SQLAlchemy models!
+class Follow(Base):
+    __tablename__ = "followings"
+    follower = Column(String, ForeignKey("users.email"), primary_key=True)
+    follows = Column(String, ForeignKey("users.email"), primary_key=True)
+    timestamp = Column(Integer)
+
 class User(Base):
     __tablename__ = "users"
     email = Column(String, primary_key=True, index=True)
@@ -12,6 +18,9 @@ class User(Base):
     birthday = Column(String)
     posts = relationship("Post", back_populates="owner")
     pets = relationship("Pet", back_populates="owneruser")
+    follows = relationship("Follow", foreign_keys=[Follow.follower])
+    followed_by = relationship("Follow", foreign_keys=[Follow.follows])
+    
 
 class Post(Base):
     __tablename__ = "posts"
@@ -19,7 +28,6 @@ class Post(Base):
     owner_id = Column(String, ForeignKey("users.email"), nullable=False)
     response_to = Column(Integer, ForeignKey("posts.id"), nullable=True)
     content = Column(String)
-    like_count = Column(Integer, default=0)
     owner = relationship("User", back_populates="posts")
     files = relationship("File", back_populates="ownerpost")
     likes = relationship("Like", back_populates="likedpost")
@@ -71,3 +79,4 @@ class Like(Base):
     liker = Column(String, ForeignKey("users.email"), primary_key=True)
     liked_post = Column(Integer, ForeignKey("posts.id"), primary_key=True)
     likedpost = relationship("Post", back_populates="likes")
+

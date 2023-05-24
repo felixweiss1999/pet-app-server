@@ -2,6 +2,19 @@
 from pydantic import BaseModel, EmailStr
 
 
+class FollowBase(BaseModel):
+    follower: str
+    follows: str
+
+class Follow(FollowBase):
+    timestamp: int
+    class Config:
+        orm_mode = True
+
+class FollowCreate(FollowBase):
+    pass
+
+
 
 class LikeBase(BaseModel):
     liker: str
@@ -74,7 +87,6 @@ class PostBase(BaseModel):
 
 class Post(PostBase):
     id: int
-    like_count : int
     files: list[File] = []
     likes: list[Like] = []
     class Config:
@@ -124,6 +136,8 @@ class UserCreate(UserBase):
 class User(UserBase): #these are for reading data!
     posts: list[Post] = []
     pets: list[Pet] = []
+    follows: list[Follow] = []
+    followed_by: list[Follow] = []
     class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
         orm_mode = True
 
