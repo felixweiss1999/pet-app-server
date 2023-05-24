@@ -99,7 +99,7 @@ async def create_like(like: schemas.LikeCreate, request : Request, db: Session =
         raise HTTPException(status_code=403, detail="Cannot like nonexisting post!")
     if crud.get_user_by_email(db=db,email=like.liker) is None:
         raise HTTPException(status_code=403, detail="User does not exist!")
-    return {"like_status:", crud.toggle_like(db=db, like=like)}
+    return {"like_status:": crud.toggle_like(db=db, like=like)}
 
 
 

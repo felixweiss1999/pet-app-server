@@ -12,7 +12,7 @@ class Like(LikeBase):
         orm_mode = True
 
 class LikeCreate(LikeBase):
-    liked_post: str
+    liked_post: int
 
 
 
