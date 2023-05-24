@@ -248,3 +248,23 @@ async def add_file_to_message(message_id: int, fileending: str, file: UploadFile
         raise HTTPException(status_code=404, detail="Error when storing file! Make sure there is a 'files' folder in the working directory!")
     await file.close()
     return db_file
+
+
+#pet: add pet, add file to pet
+@app.post("/pet/createOrEdit", tags=["pet"], dependencies=[Depends(jwtBearer())], response_model=schemas.Pet)
+async def create_or_edit_pet(pet: schemas.PetCreate, request: Request, db: Session = Depends(get_db), pet_id: int = None):
+    if crud.get_user_by_email(db=db, email=pet.owner) == None:
+        raise HTTPException(status_code=404, detail="Owner does not exist!")
+    useMeToExtract = jwtBearer()
+    confirmeduid : str = await useMeToExtract(request=request)
+    if pet.owner != confirmeduid:
+        raise HTTPException(status_code=403, detail="Cannot create or edit someone elses pet!")
+    if pet_id is not None: 
+        if crud.get_pet_by_id(db=db, petid=pet_id) is not None:
+            return crud.edit_pet(db=db, pet=pet, petid=pet_id)
+        raise HTTPException(status_code=404, detail="Trying to edit nonexistent pet!")
+    return crud.create_pet(db=db, pet=pet) 
+
+
+
+#later: edit user, edit pet (just extend the respective create functions!)

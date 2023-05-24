@@ -93,3 +93,27 @@ def create_message(db: Session, message: schemas.MessageCreate):
     db.commit()
     db.refresh(db_message)
     return db_message
+
+
+#pet
+
+def create_pet(db: Session, pet: schemas.PetCreate):
+    db_pet = models.Pet(**pet.dict())
+    db.add(db_pet)
+    db.commit()
+    db.refresh(db_pet)
+    return db_pet
+
+def edit_pet(db: Session, pet: schemas.PetCreate, petid: int):
+    db_pet = db.query(models.Pet).filter(models.Pet.id == petid).first()
+    db_pet.birthday = pet.birthday
+    db_pet.breed = pet.breed
+    db_pet.gender = pet.gender
+    db_pet.name = pet.name
+    db_pet.personality_labels = pet.personality_labels
+    db.commit()
+    db.refresh(db_pet)
+    return db_pet
+
+def get_pet_by_id(db: Session, petid: int):
+    return db.query(models.Pet).filter(models.Pet.id == petid).first()
