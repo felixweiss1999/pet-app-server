@@ -331,3 +331,19 @@ async def upload_file_to_pet(pet_id: int, fileending: str, file: UploadFile, req
     await file.close()
     return db_file
 
+
+# attraction
+@app.get("/attraction", tags=["attraction"], response_model=list[schemas.Attraction])
+def get_all_attractions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_attractions(db=db, skip=skip, limit=limit)
+
+@app.get("/attraction/{attraction_id}", tags=["attraction"], response_model=schemas.Attraction)
+def get_attraction_by_id(id: int, db: Session = Depends(get_db)):
+    db_attraction = crud.get_attraction_by_id(db=db, id=id)
+    if db_attraction is None:
+        raise HTTPException(status_code=404, detail="Attraction not found!")
+    return db_attraction
+
+@app.post("/attraction", tags=["attraction"], response_model=schemas.Attraction)
+async def create_attraction(attraction: schemas.AttractionCreate, db: Session = Depends(get_db)): #definitely a very shabby way of creating attractions, only for demo purposes. this allows functionally identical attractions, and creation without any authorization
+    return crud.create_attraction(db=db, attraction=attraction)

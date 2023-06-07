@@ -155,8 +155,8 @@ class AttractionCreate(AttractionBase):
     pass
 
 class Attraction(AttractionBase):
-    id = int
-    posts = list[Post] = []
+    id: int
+    posts: list[Post] = []
     class Config:
         orm_mode = True
 
