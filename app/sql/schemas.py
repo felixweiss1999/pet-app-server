@@ -83,6 +83,7 @@ class MessageCreate(MessageBase):
 class PostBase(BaseModel):
     owner_id: str
     response_to: int | None = None
+    attraction: int | None = None
     content: str
     
 
