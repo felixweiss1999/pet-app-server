@@ -62,7 +62,7 @@ async def create_post(post: schemas.PostCreate, request : Request, db: Session =
     db_user = crud.get_user_by_email(db=db,email=post.owner_id)
     if db_user is None:
         raise HTTPException(status_code=403, detail="User does not exist!")
-    if crud.get_attraction_by_id(db=db, attractionid=post.attraction) is None:
+    if post.attraction != 0 and crud.get_attraction_by_id(db=db, attractionid=post.attraction) is None:
         raise HTTPException(status_code=403, detail="Attraction does not exist!")
     return crud.create_post(db=db, post=post)
 
