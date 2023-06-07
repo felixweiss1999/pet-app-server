@@ -16,6 +16,7 @@ class User(Base):
     name = Column(String)
     intro = Column(String)
     birthday = Column(String)
+    location = Column(String)
     posts = relationship("Post", back_populates="owner")
     pets = relationship("Pet", back_populates="owneruser")
     follows = relationship("Follow", foreign_keys=[Follow.follower])

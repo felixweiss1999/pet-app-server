@@ -131,6 +131,7 @@ class UserBase(BaseModel): #common data while creating or reading data!
     name: str
     intro: str
     birthday: str
+    location: str
 
 class UserCreate(UserBase): 
     password: str
