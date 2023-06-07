@@ -339,7 +339,7 @@ def get_all_attractions(skip: int = 0, limit: int = 100, db: Session = Depends(g
 
 @app.get("/attraction/{attraction_id}", tags=["attraction"], response_model=schemas.Attraction)
 def get_attraction_by_id(id: int, db: Session = Depends(get_db)):
-    db_attraction = crud.get_attraction_by_id(db=db, id=id)
+    db_attraction = crud.get_attraction_by_id(db=db, attractionid=id)
     if db_attraction is None:
         raise HTTPException(status_code=404, detail="Attraction not found!")
     return db_attraction

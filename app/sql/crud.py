@@ -155,3 +155,18 @@ def toggle_follow(db: Session, follow: schemas.FollowCreate):
         db.delete(db_follow)
         db.commit()
         return 0
+
+
+# attraction
+def create_attraction(db: Session, attraction: schemas.AttractionCreate):
+    db_attraction = models.Attraction(attraction.dict())
+    db.add(db_attraction)
+    db.commit()
+    db.refresh(db_attraction)
+    return db_attraction
+
+def get_attractions(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Attraction).offset(skip).limit(limit).all()
+
+def get_attraction_by_id(db: Session, attractionid: int):
+    return db.query(models.Attraction).filter(models.Attraction.id == attractionid).first()
