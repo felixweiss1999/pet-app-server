@@ -192,18 +192,11 @@ async def toggle_follow(follow: schemas.FollowCreate, request : Request, db: Ses
 
 #file
 
-@app.get("/file/{file_id}", response_class=FileResponse, dependencies=[Depends(jwtBearer())], tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
-async def download_file_by_id(file_id: int, request: Request, db: Session = Depends(get_db)):
+@app.get("/file/{file_id}", response_class=FileResponse, tags=["file"]) #FileResponse will handle everything from just returning the path to the file!
+async def download_file_by_id(file_id: int, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_id(db=db, fileid=file_id)
     if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
-    if db_file.message is not None: #perform security check by getting chat of message of file
-        db_message = crud.get_message_by_id(db=db, messageid=db_file.message)
-        db_chat = crud.get_chat_by_id(db=db, chatid=db_message.chat)
-        useMeToExtract = jwtBearer()
-        confirmeduid : str = await useMeToExtract(request=request)
-        if db_chat.user1 != confirmeduid and db_chat.user2 != confirmeduid:
-            raise HTTPException(status_code=404, detail="Not allowed to get file of other chat!")
     mimetype = mimetypes.guess_type(db_file.file_path)[0]
     if mimetypes is None:
         return FileResponse(path=db_file.file_path)
