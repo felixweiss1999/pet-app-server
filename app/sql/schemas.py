@@ -145,5 +145,18 @@ class User(UserBase): #these are for reading data!
     class Config: #.. because it is told here to do so! And also will know that this is not a dict, but an orm model to read out!
         orm_mode = True
 
+class AttractionBase(BaseModel):
+    name: str
+    location: str
+    lat: float
+    lon: float
 
+class AttractionCreate(AttractionBase):
+    pass
+
+class Attraction(AttractionBase):
+    id = int
+    posts = list[Post] = []
+    class Config:
+        orm_mode = True
 
