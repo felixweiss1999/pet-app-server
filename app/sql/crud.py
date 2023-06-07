@@ -159,7 +159,7 @@ def toggle_follow(db: Session, follow: schemas.FollowCreate):
 
 # attraction
 def create_attraction(db: Session, attraction: schemas.AttractionCreate):
-    db_attraction = models.Attraction(attraction.dict())
+    db_attraction = models.Attraction(**attraction.dict())
     db.add(db_attraction)
     db.commit()
     db.refresh(db_attraction)
