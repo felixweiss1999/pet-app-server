@@ -236,8 +236,11 @@ async def get_messages_by_chat(chat_id: int, request: Request, db: Session = Dep
     db_chat = crud.get_chat_by_id(db=db, chatid=chat_id)
     useMeToExtract = jwtBearer()
     confirmeduid : str = await useMeToExtract(request=request)
-    if db_chat.user1 != confirmeduid and db_chat.user2 != confirmeduid:
-        raise HTTPException(status_code=403, detail="Cannot get messages of someone elses chat!")
+    if db_chat is not None:
+        if db_chat.user1 != confirmeduid and db_chat.user2 != confirmeduid:
+            raise HTTPException(status_code=403, detail="Cannot get messages of someone elses chat!")
+    else:
+        raise HTTPException(status_code=404, detail="Chat does not exist!")
     return db_chat.messages
 
 @app.post("/chat/sendmsg", tags=["chat"], dependencies=[Depends(jwtBearer())], response_model=schemas.Message)
