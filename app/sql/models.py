@@ -30,6 +30,7 @@ class Post(Base):
     response_to = Column(Integer, ForeignKey("posts.id"), nullable=True)
     attraction = Column(Integer, ForeignKey("attractions.id"), nullable=True)
     content = Column(String)
+    label = Column(String)
     timestamp = Column(Integer)
     owner = relationship("User", back_populates="posts")
     files = relationship("File", back_populates="ownerpost")
