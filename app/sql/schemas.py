@@ -85,6 +85,7 @@ class PostBase(BaseModel):
     response_to: int | None = None
     attraction: int | None = None
     content: str
+    label: str
     
 
 class Post(PostBase):
