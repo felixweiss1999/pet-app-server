@@ -166,7 +166,8 @@ async def upload_profile_picture(user_id: str, fileending: str, file: UploadFile
 @app.get("/user/{user_id}/profile_picture", response_class=FileResponse, tags=["user"]) #FileResponse will handle everything from just returning the path to the file!
 async def download_profile_picture(user_id: str, db: Session = Depends(get_db)):
     db_file = crud.get_filename_by_user(db=db, userid=user_id)
-    if db_file[-1] is None:
+    print(db_file)
+    if db_file == []:
         raise HTTPException(status_code=404, detail="User does not have a profile picture!")
     mimetype = mimetypes.guess_type(db_file[-1].file_path)[0]
     print(mimetype)
